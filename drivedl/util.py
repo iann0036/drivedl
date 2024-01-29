@@ -150,7 +150,7 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
             DEBUG_STATEMENTS.append(f'File Name: {file["name"]}, File ID: {file["id"]}, Exception: {ex}')
             rate_limit_count += 1
     fh.close()
-    if noiter and rate_limit_count == 20: print(f"{Fore.RED}Error      {Style.RESET_ALL} {file['name']} ...")
+    if noiter and rate_limit_count == 20: print(f"{Fore.RED}Error      {Style.RESET_ALL} {file['name']} ({file['id']}) ...")
     os.makedirs(destination, exist_ok=True)
     while True:
         try:
