@@ -129,7 +129,6 @@ def main(console_call=True):
 
     folders = {}
     if sys.argv[1].startswith("{"):
-        print(sys.argv[1])
         folders = json.loads(sys.argv[1])
     else:
         folders[destination] = sys.argv[1]
