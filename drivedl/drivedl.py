@@ -136,8 +136,8 @@ def main(console_call=True):
         folders[destination] = sys.argv[1]
 
     for folderkey in folders.keys():
+        folderid = util.get_folder_id(folders[folderkey])
         destination = destination_prefix + folderkey
-        folderid = util.get_folder_id(folders[destination])
             
         file_dest = []
 
