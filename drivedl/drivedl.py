@@ -31,6 +31,9 @@ def migrate():
         os.rename('token.pickle', f'tokens/{new_name}')
 
 def get_accounts():
+    print("cwd3: ")
+    print(os.getcwd())
+    print(os.listdir('tokens'))
     return [x for x in os.listdir('tokens') if x.endswith('.pickle')]
 
 def get_service(tokenfile):
