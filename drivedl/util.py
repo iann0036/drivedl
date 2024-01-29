@@ -111,6 +111,7 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
     resolved_mime_type = 'application/pdf'
     if "application/vnd.google-apps" in mimeType:
         if "form" in mimeType: return -1
+        elif "shortcut" in mimeType: return -1
         elif "document" in mimeType:
             dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
             resolved_mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -147,10 +148,11 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
                 if not noiter: print()
                 print(f"{Fore.RED}Abuse error for file{Style.RESET_ALL} {file['name']} ...")
                 rate_limit_count = 21
+            print(file['id'])
             DEBUG_STATEMENTS.append(f'File Name: {file["name"]}, File ID: {file["id"]}, Exception: {ex}')
             rate_limit_count += 1
     fh.close()
-    if noiter and rate_limit_count == 20: print(f"{Fore.RED}Error      {Style.RESET_ALL} {file['name']} ({file['id']}) ...")
+    if noiter and rate_limit_count == 20: print(f"{Fore.RED}Error      {Style.RESET_ALL} {file['name']} ...")
     os.makedirs(destination, exist_ok=True)
     while True:
         try:
