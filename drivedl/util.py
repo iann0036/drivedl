@@ -130,6 +130,9 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
         try:
             status, done = downloader.next_chunk()
         except Exception as ex:
+            if "exportSizeLimitExceeded" in str(ex).lower():
+                print(f"{Fore.RED}Export too large for file{Style.RESET_ALL} {file['name']} ...")
+                rate_limit_count = 21
             if "abuse" in str(ex).lower():
                 if not noiter: print()
                 print(f"{Fore.RED}Abuse error for file{Style.RESET_ALL} {file['name']} ...")
