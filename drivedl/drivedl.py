@@ -128,12 +128,15 @@ def main(console_call=True):
             destination = os.getcwd()
 
     folders = {}
+    destination_prefix = ''
     if sys.argv[1].startswith("{"):
+        destination_prefix = destination + "/"
         folders = json.loads(sys.argv[1])
     else:
         folders[destination] = sys.argv[1]
 
-    for destination in folders.keys():
+    for folderkey in folders.keys():
+        destination = destination_prefix + folderkey
         folderid = util.get_folder_id(folders[destination])
             
         file_dest = []
