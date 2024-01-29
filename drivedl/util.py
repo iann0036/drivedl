@@ -93,7 +93,9 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
     # add file extension if we don't have one
     mimeType = file['mimeType']
     if "application/vnd.google-apps" in mimeType:
-        if "form" in mimeType:
+        if "shortcut" in mimeType:
+            ext_file = '.googleshortcut'
+        elif "form" in mimeType:
             ext_file = '.googleform.zip'
         elif "drawing" in mimeType:
             ext_file = '.googledrawing.svg'
@@ -123,7 +125,12 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
         return -1
     resolved_mime_type = 'text/plain'
     if "application/vnd.google-apps" in mimeType:
-        if "shortcut" in mimeType: return -1
+        if "shortcut" in mimeType:
+            print(f"{Fore.GREEN}Creating shortcut{Style.RESET_ALL} {file['name']} ...")
+            os.makedirs(destination, exist_ok=True)
+            with open(os.path.join(destination, file['name']), "w") as fh:
+                fh.write(file['shortcutDetails']['targetId'])
+            return 0
         elif "form" in mimeType:
             resolved_mime_type = 'application/zip'
         elif "drawing" in mimeType:
