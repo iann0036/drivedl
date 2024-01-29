@@ -82,6 +82,7 @@ def main(console_call=True):
     print(os.getcwd())
 
     if not os.path.exists('credentials.json'):
+        print(os.listdir('.'))
         print(f"Missing Credentials!\nEnable Drive API by clicking the blue button at https://developers.google.com/drive/api/v3/quickstart/python \nDownload the credentials.json file and save it here: {os.getcwd()}")
 
     migrate()
