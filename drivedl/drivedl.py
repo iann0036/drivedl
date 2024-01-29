@@ -31,9 +31,6 @@ def migrate():
         os.rename('token.pickle', f'tokens/{new_name}')
 
 def get_accounts():
-    print("cwd3: ")
-    print(os.getcwd())
-    print(os.listdir('tokens'))
     return [x for x in os.listdir('tokens') if x.endswith('.pickle')]
 
 def get_service(tokenfile):
@@ -41,9 +38,6 @@ def get_service(tokenfile):
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-
-    print("cwd2: ")
-    print(os.getcwd())
 
     if os.path.exists(f'tokens/{tokenfile}'):
         with open(f'tokens/{tokenfile}', 'rb') as token:
@@ -77,9 +71,6 @@ def main(console_call=True):
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
     else:
         os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
-    print("cwd: ")
-    print(os.getcwd())
 
     if not os.path.exists('credentials.json'):
         print(os.listdir('.'))
