@@ -8,8 +8,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.errors import HttpError
 
+# Hard override working directory
+os.chdir('/tmp')
+
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ['https://www.googleapis.com/auth/drive.metadata', 'https://www.googleapis.com/auth/drive.readonly']
 PROCESS_COUNT = 5
 
 def add_account():
@@ -34,9 +37,6 @@ def get_accounts():
     return [x for x in os.listdir('tokens') if x.endswith('.pickle')]
 
 def get_service(tokenfile):
-    """Shows basic usage of the Drive v3 API.
-    Prints the names and ids of the first 10 files the user has access to.
-    """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
