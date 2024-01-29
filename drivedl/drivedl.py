@@ -38,6 +38,10 @@ def get_service(tokenfile):
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
+
+    print("cwd2: ")
+    print(os.getcwd())
+
     if os.path.exists(f'tokens/{tokenfile}'):
         with open(f'tokens/{tokenfile}', 'rb') as token:
             creds = pickle.load(token)
@@ -70,6 +74,9 @@ def main(console_call=True):
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
     else:
         os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    print("cwd: ")
+    print(os.getcwd())
 
     if not os.path.exists('credentials.json'):
         print(f"Missing Credentials!\nEnable Drive API by clicking the blue button at https://developers.google.com/drive/api/v3/quickstart/python \nDownload the credentials.json file and save it here: {os.getcwd()}")
