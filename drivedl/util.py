@@ -1,9 +1,10 @@
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, HttpRequest
 from colorama import Fore, Style
 import io, os, shutil, uuid, sys, json, time
+import google_auth_httplib2
 
 FOLDER = 'application/vnd.google-apps.folder'
 DEBUG = False
@@ -107,14 +108,18 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
     # file is a dictionary with file id as well as name
     if skip and os.path.exists(os.path.join(destination, file['name'])):
         return -1
+    resolved_mime_type = 'application/pdf'
     if "application/vnd.google-apps" in mimeType:
         if "form" in mimeType: return -1
         elif "document" in mimeType:
             dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            resolved_mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         elif "spreadsheet" in mimeType:
             dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            resolved_mime_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         elif "presentation" in mimeType:
             dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.presentationml.presentation')
+            resolved_mime_type = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
         else:
             dlfile = service.files().export_media(fileId=file['id'], mimeType='application/pdf')
     else:
@@ -130,9 +135,14 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
         try:
             status, done = downloader.next_chunk()
         except Exception as ex:
-            if "exportSizeLimitExceeded" in str(ex).lower():
-                print(f"{Fore.RED}Export too large for file{Style.RESET_ALL} {file['name']} ...")
-                rate_limit_count = 21
+            if "exportsizelimitexceeded" in str(ex).lower():
+                print(f"{Fore.YELLOW}Export too large for file{Style.RESET_ALL} {file['name']} ... attempting direct download")
+                file_info = service.files().get(fileId=file['id'], supportsAllDrives=True, acknowledgeAbuse=abuse, fields='exportLinks').execute()
+                url = file_info['exportLinks'][resolved_mime_type]
+                http = google_auth_httplib2.AuthorizedHttp(service._http.credentials)
+                dlfile = HttpRequest(http, HttpRequest.null_postproc, url)
+                downloader = MediaIoBaseDownload(fh, dlfile, chunksize=CHUNK_SIZE)
+                rate_limit_count -= 1
             if "abuse" in str(ex).lower():
                 if not noiter: print()
                 print(f"{Fore.RED}Abuse error for file{Style.RESET_ALL} {file['name']} ...")
