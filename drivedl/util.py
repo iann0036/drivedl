@@ -123,6 +123,7 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
             resolved_mime_type = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
         else:
             dlfile = service.files().export_media(fileId=file['id'], mimeType='application/pdf')
+            print(f"{Fore.YELLOW}Bailout type used for file{Style.RESET_ALL} {file['name']} ...")
     else:
         dlfile = service.files().get_media(fileId=file['id'], supportsAllDrives=True, acknowledgeAbuse=abuse)
     rand_id = str(uuid.uuid4())
