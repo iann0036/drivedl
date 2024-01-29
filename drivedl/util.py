@@ -93,7 +93,20 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
     # add file extension if we don't have one
     mimeType = file['mimeType']
     if "application/vnd.google-apps" in mimeType:
-        if "form" in mimeType: return -1
+        if "form" in mimeType:
+            ext_file = '.googleform.zip'
+        elif "drawing" in mimeType:
+            ext_file = '.googledrawing.svg'
+        elif "script" in mimeType:
+            ext_file = '.googlescript.json'
+        elif "site" in mimeType:
+            ext_file = '.googlesite.txt'
+        elif "jam" in mimeType:
+            ext_file = '.googlejam.pdf'
+        elif "mail-layout" in mimeType:
+            ext_file = '.googlemaillayout.txt'
+        elif "scenes" in mimeType:
+            ext_file = '.googlescenes.mp4'
         elif "document" in mimeType:
             ext_file = '.docx'
         elif "spreadsheet" in mimeType:
@@ -101,29 +114,40 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
         elif "presentation" in mimeType:
             ext_file = '.pptx'
         else:
-            ext_file = '.pdf'
+            ext_file = '.unknown'
         root, ext = os.path.splitext(file['name'])
         if not ext:
             file['name'] = file['name'] + ext_file
     # file is a dictionary with file id as well as name
     if skip and os.path.exists(os.path.join(destination, file['name'])):
         return -1
-    resolved_mime_type = 'application/pdf'
+    resolved_mime_type = 'text/plain'
     if "application/vnd.google-apps" in mimeType:
-        if "form" in mimeType: return -1
-        elif "shortcut" in mimeType: return -1
+        if "shortcut" in mimeType: return -1
+        elif "form" in mimeType:
+            resolved_mime_type = 'application/zip'
+        elif "drawing" in mimeType:
+            resolved_mime_type = 'image/svg+xml'
+        elif "script" in mimeType:
+            resolved_mime_type = 'application/vnd.google-apps.script+json'
+        elif "site" in mimeType:
+            resolved_mime_type = 'text/plain'
+        elif "jam" in mimeType:
+            resolved_mime_type = 'application/pdf'
+        elif "mail-layout" in mimeType:
+            resolved_mime_type = 'text/plain'
+        elif "scenes" in mimeType:
+            resolved_mime_type = 'video/mp4'
         elif "document" in mimeType:
-            dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
             resolved_mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         elif "spreadsheet" in mimeType:
-            dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             resolved_mime_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         elif "presentation" in mimeType:
-            dlfile = service.files().export_media(fileId=file['id'], mimeType='application/vnd.openxmlformats-officedocument.presentationml.presentation')
             resolved_mime_type = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
         else:
-            dlfile = service.files().export_media(fileId=file['id'], mimeType='application/pdf')
+            resolved_mime_type = 'text/plain'
             print(f"{Fore.YELLOW}Bailout type used for file{Style.RESET_ALL} {file['name']} ...")
+        dlfile = service.files().export_media(fileId=file['id'], mimeType=resolved_mime_type)
     else:
         dlfile = service.files().get_media(fileId=file['id'], supportsAllDrives=True, acknowledgeAbuse=abuse)
     rand_id = str(uuid.uuid4())
