@@ -118,7 +118,6 @@ def main(console_call=True):
             sys.argv.pop(index)
         else:
             PROCESS_COUNT = 5
-        folderid = util.get_folder_id(sys.argv[1])
         if len(sys.argv) > 2:
             destination = sys.argv[2]
         elif os.path.isfile('config.json'):
@@ -127,76 +126,85 @@ def main(console_call=True):
             destination = config['default_path']
         else:
             destination = os.getcwd()
-        
-    file_dest = []
 
-    def build_files():
-        try:
-            kwargs = {'top': folderid, 'by_name': False}
-            for path, root, dirs, files in util.walk(service, **kwargs):
-                path = ["".join([c for c in dirname if c.isalpha() or c.isdigit() or c in [' ', '-', '_', '.', '(', ')', '[', ']']]).rstrip() for dirname in path]
-                for f in files:
-                    dest = os.path.join(destination, os.path.join(*path))
-                    f['name'] = "".join([c for c in f['name'] if c.isalpha() or c.isdigit() or c in [' ', '-', '_', '.', '(', ')', '[', ']']]).rstrip()
-                    file_dest.append((service, f, dest, skip, abuse))
-            if file_dest != []:
-                # First valid account found, break to prevent further searches
-                return True
-        except ValueError: # mimetype is not a folder
-            dlfile = service.files().get(fileId=folderid, supportsAllDrives=True).execute()
-            print(f"\nNot a valid folder ID. \nDownloading the file : {dlfile['name']}")
-            # Only use a single process for downloading 1 file
-            util.download(service, dlfile, destination, skip, abuse)
-            sys.exit(0)
-        except HttpError:
-            print(f"{Fore.RED}File not found in account: {acc}{Style.RESET_ALL}")
-            return False
+    folders = {}
+    if sys.argv[1].startswith("{"):
+        folders = json.loads(sys.argv[1])
+    else:
+        folders[destination] = sys.argv[1]
 
-    searches = []
-    for acc in accounts:
-        service = get_service(acc)
-        if not search:
-            valid = build_files()
-            if valid: break
-        else:
-            searches += util.querysearch(service, folderid, 'rand', True)
+    for destination in folders.keys():
+        folderid = util.get_folder_id(folders[destination])
+            
+        file_dest = []
 
-    if searches != []:
-        print("\nEnter the number of the folder you want to download:")
-        for i in range(len(searches)):
-            print(f" {Fore.YELLOW}{str(i+1).ljust(3)}{Style.RESET_ALL}    {searches[i]['name']}")
-        print(f"\n{Fore.GREEN}Index:{Style.RESET_ALL} ", end='')
-        index = int(input()) - 1
-        if index + 1 > len(searches):
-            print(f"{Fore.RED}Invalid Index. Exiting.{Style.RESET_ALL}")
+        def build_files():
+            try:
+                kwargs = {'top': folderid, 'by_name': False}
+                for path, root, dirs, files in util.walk(service, **kwargs):
+                    path = ["".join([c for c in dirname if c.isalpha() or c.isdigit() or c in [' ', '-', '_', '.', '(', ')', '[', ']']]).rstrip() for dirname in path]
+                    for f in files:
+                        dest = os.path.join(destination, os.path.join(*path))
+                        f['name'] = "".join([c for c in f['name'] if c.isalpha() or c.isdigit() or c in [' ', '-', '_', '.', '(', ')', '[', ']']]).rstrip()
+                        file_dest.append((service, f, dest, skip, abuse))
+                if file_dest != []:
+                    # First valid account found, break to prevent further searches
+                    return True
+            except ValueError: # mimetype is not a folder
+                dlfile = service.files().get(fileId=folderid, supportsAllDrives=True).execute()
+                print(f"\nNot a valid folder ID. \nDownloading the file : {dlfile['name']}")
+                # Only use a single process for downloading 1 file
+                util.download(service, dlfile, destination, skip, abuse)
+                sys.exit(0)
+            except HttpError:
+                print(f"{Fore.RED}File not found in account: {acc}{Style.RESET_ALL}")
+                return False
+
+        searches = []
+        for acc in accounts:
+            service = get_service(acc)
+            if not search:
+                valid = build_files()
+                if valid: break
+            else:
+                searches += util.querysearch(service, folderid, 'rand', True)
+
+        if searches != []:
+            print("\nEnter the number of the folder you want to download:")
+            for i in range(len(searches)):
+                print(f" {Fore.YELLOW}{str(i+1).ljust(3)}{Style.RESET_ALL}    {searches[i]['name']}")
+            print(f"\n{Fore.GREEN}Index:{Style.RESET_ALL} ", end='')
+            index = int(input()) - 1
+            if index + 1 > len(searches):
+                print(f"{Fore.RED}Invalid Index. Exiting.{Style.RESET_ALL}")
+                sys.exit(1)
+            folderid = searches[index]['id']
+            build_files()
+
+        if service == None:
+            # No accounts found with access to the drive link, exit gracefully
+            print("No valid accounts with access to the file/folder.")
+            print("Have you run the drivedl --add command? Exiting...")
             sys.exit(1)
-        folderid = searches[index]['id']
-        build_files()
-
-    if service == None:
-        # No accounts found with access to the drive link, exit gracefully
-        print("No valid accounts with access to the file/folder.")
-        print("Have you run the drivedl --add command? Exiting...")
-        sys.exit(1)
-    try:
-        p = Pool(PROCESS_COUNT)
-        if noiter:
-            p.map(mapped_dl, file_dest)
-        else:
-            pbar = tqdm.tqdm(p.imap_unordered(download_helper, file_dest), total=len(file_dest))
-            start = time.time()
-            for i in pbar:
-                rlc = i[1]
-                status, main_str, end_str = util.get_download_status(rlc, start)
-                pbar.write(status + main_str + f' {i[0]}' + end_str)
-            p.close()
-            p.join()
-        if util.DEBUG:
-            util.debug_write(f'debug_{int(time.time())}.log')
-    except ImportError:
-        # Multiprocessing is not supported (example: Android Devices)
-        for fd in file_dest:
-            download_helper(fd)
+        try:
+            p = Pool(PROCESS_COUNT)
+            if noiter:
+                p.map(mapped_dl, file_dest)
+            else:
+                pbar = tqdm.tqdm(p.imap_unordered(download_helper, file_dest), total=len(file_dest))
+                start = time.time()
+                for i in pbar:
+                    rlc = i[1]
+                    status, main_str, end_str = util.get_download_status(rlc, start)
+                    pbar.write(status + main_str + f' {i[0]}' + end_str)
+                p.close()
+                p.join()
+            if util.DEBUG:
+                util.debug_write(f'debug_{int(time.time())}.log')
+        except ImportError:
+            # Multiprocessing is not supported (example: Android Devices)
+            for fd in file_dest:
+                download_helper(fd)
 
 if __name__ == '__main__':
     main(False)
