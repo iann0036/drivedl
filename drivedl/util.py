@@ -128,8 +128,11 @@ def download(service, file, destination, skip=False, abuse=False, noiter=False):
         if "shortcut" in mimeType:
             print(f"{Fore.GREEN}Creating shortcut{Style.RESET_ALL} {file['name']} ...")
             os.makedirs(destination, exist_ok=True)
-            with open(os.path.join(destination, file['name']), "w") as fh:
-                fh.write(file['shortcutDetails']['targetId'])
+            try:
+                with open(os.path.join(destination, file['name']), "w") as fh:
+                    fh.write(file['shortcutDetails']['targetId'])
+            except:
+                print(f"{Fore.RED}Could not write shortcut{Style.RESET_ALL} {file['name']} ...")
             return 0
         elif "form" in mimeType:
             resolved_mime_type = 'application/zip'
